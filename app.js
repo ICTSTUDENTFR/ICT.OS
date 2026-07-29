@@ -20,8 +20,8 @@ const STATUTS_GOAL = ["En cours", "Atteint", "Manqué"];
 const EVENT_TYPES = ["FOMC / FED", "Powell Speech", "NFP", "CPI", "PPI", "GDP", "PMI", "Retail Sales", "Unemployment Claims", "Trade Balance", "Autre"];
 const HIGH_IMPACT_TYPES = ["FOMC / FED", "NFP", "CPI", "PPI"];
 
-// ---- Checklists types ICT (issues de tes notes "When Avoid Trading ?") ----
-const WEEKLY_BIAS_TEMPLATE = [
+// ---- Checklist type ICT (issue de tes notes "When Avoid Trading ?") — regroupée dans le Daily Planner ----
+const DAILY_BIAS_TEMPLATE = [
   "Bad Market Conditions — Previous Day Large Range Day",
   "Bad Market Conditions — EQ of Higher Time Frame Dealing Range",
   "Bad Market Conditions — Clustering of NWOG / NDOG",
@@ -33,8 +33,6 @@ const WEEKLY_BIAS_TEMPLATE = [
   "London Session — Before a Long Week End",
   "London Session — After a Holiday",
   "London Session — After a FOMC Event",
-];
-const DAILY_BIAS_TEMPLATE = [
   "Pre-Market — FOMC Days : do it early or do nothing",
   "Pre-Market — Elongated move overnight → wait 09:30am",
   "AM Session — After a large range day → avoid AM, trade PM",
@@ -64,7 +62,25 @@ let currentPage = "dashboard";
 let modalContext = null;
 
 // ---- 4) HELPERS ----
-function todayStr() { return new Date().toISOString().slice(0, 10); }
+function pad2(n) { return String(n).padStart(2, "0"); }
+function toISODate(y, m, d) { return `${y}-${pad2(m)}-${pad2(d)}`; }
+function todayStr() {
+  const d = new Date();
+  return toISODate(d.getFullYear(), d.getMonth() + 1, d.getDate());
+}
+function addDays(dateStr, n) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const u = new Date(Date.UTC(y, m - 1, d));
+  u.setUTCDate(u.getUTCDate() + n);
+  return toISODate(u.getUTCFullYear(), u.getUTCMonth() + 1, u.getUTCDate());
+}
+function mondayOf(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const u = new Date(Date.UTC(y, m - 1, d));
+  const day = u.getUTCDay() || 7; // dimanche = 7
+  if (day !== 1) u.setUTCDate(u.getUTCDate() - (day - 1));
+  return toISODate(u.getUTCFullYear(), u.getUTCMonth() + 1, u.getUTCDate());
+}
 function nowStr() { const d = new Date(); return d.toISOString().slice(0, 16).replace("T", " "); }
 function fmtDateFR(iso) {
   if (!iso) return "";
@@ -75,14 +91,10 @@ function fmtDateFR(iso) {
 function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
 function daysUntil(iso) {
   if (!iso) return Infinity;
-  const a = new Date(String(iso).slice(0, 10) + "T00:00:00"), b = new Date(todayStr() + "T00:00:00");
+  const [y1, m1, d1] = String(iso).slice(0, 10).split("-").map(Number);
+  const [y2, m2, d2] = todayStr().split("-").map(Number);
+  const a = Date.UTC(y1, m1 - 1, d1), b = Date.UTC(y2, m2 - 1, d2);
   return Math.round((a - b) / 86400000);
-}
-function mondayOf(dateStr) {
-  const d = new Date(dateStr + "T00:00:00");
-  const day = d.getDay() || 7; // dimanche = 7
-  if (day !== 1) d.setDate(d.getDate() - (day - 1));
-  return d.toISOString().slice(0, 10);
 }
 function showToast(msg) {
   const t = document.getElementById("toast");
@@ -435,13 +447,6 @@ async function renderWeekly() {
   const monday = wp.week_start_date;
   document.getElementById("weekly-week-lbl").textContent = `Semaine du ${fmtDateFR(monday)}`;
 
-  const list = document.getElementById("weekly-checklist");
-  const items = wp.bias_checklist || [];
-  list.innerHTML = items.length ? items.map((it, i) => `
-    <li><input type="checkbox" ${it.checked ? "checked" : ""} onchange="toggleWeeklyChecklist(${i})"> ${it.label}
-      <button onclick="removeWeeklyChecklist(${i})">✕</button></li>`).join("")
-    : `<li style="color:var(--muted);">Aucun point de biais ajouté pour cette semaine.</li>`;
-
   const news = cache.economic_news.filter(n => n.weekly_planner_id === wp.id).sort((a, b) => (a.date_event || "").localeCompare(b.date_event || ""));
   document.getElementById("weekly-news-tbody").innerHTML = news.length ? news.map(n => `
     <tr><td>${fmtDateFR(n.date_event)}</td><td>${n.heure || "—"}</td><td>${n.event_type || "—"}</td><td>${n.event}</td><td>${badge(n.impact, STATUT_COLORS[n.impact])}</td><td>${n.implication || "—"}</td>
@@ -449,38 +454,6 @@ async function renderWeekly() {
     : `<tr class="empty-row"><td colspan="7">Aucune news économique renseignée</td></tr>`;
 
   renderWeekAdviceGrid(wp, news);
-}
-async function loadWeeklyTemplate() {
-  const wp = await ensureWeeklyPlanner();
-  const existingLabels = new Set((wp.bias_checklist || []).map(it => it.label));
-  const toAdd = WEEKLY_BIAS_TEMPLATE.filter(l => !existingLabels.has(l)).map(label => ({ label, checked: false }));
-  if (!toAdd.length) { showToast("Checklist type déjà chargée"); return; }
-  const items = [...(wp.bias_checklist || []), ...toAdd];
-  await updateRow("weekly_planners", wp.id, { bias_checklist: items });
-  await refreshAll();
-}
-async function toggleWeeklyChecklist(i) {
-  const wp = currentWeeklyPlanner(); if (!wp) return;
-  const items = [...(wp.bias_checklist || [])];
-  items[i] = { ...items[i], checked: !items[i].checked };
-  await updateRow("weekly_planners", wp.id, { bias_checklist: items });
-  await refreshAll();
-}
-async function removeWeeklyChecklist(i) {
-  const wp = currentWeeklyPlanner(); if (!wp) return;
-  const items = [...(wp.bias_checklist || [])];
-  items.splice(i, 1);
-  await updateRow("weekly_planners", wp.id, { bias_checklist: items });
-  await refreshAll();
-}
-async function addWeeklyChecklist() {
-  const input = document.getElementById("weekly-checklist-input");
-  const label = input.value.trim(); if (!label) return;
-  const wp = await ensureWeeklyPlanner();
-  const items = [...(wp.bias_checklist || []), { label, checked: false }];
-  await updateRow("weekly_planners", wp.id, { bias_checklist: items });
-  input.value = "";
-  await refreshAll();
 }
 function openNewsDialog(id) {
   const row = id ? cache.economic_news.find(n => n.id === id) : {};
@@ -580,15 +553,10 @@ const ADVICE_LABEL = { "ok": "Trade OK", "caution": "Prudence", "avoid": "Évite
 
 function weekdayIndex(dateStr) {
   // 0=Lundi … 4=Vendredi, null si weekend
-  const d = new Date(dateStr + "T00:00:00");
-  const day = d.getDay(); // 0=dimanche
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const day = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0=dimanche
   if (day === 0 || day === 6) return null;
   return day - 1;
-}
-function addDays(dateStr, n) {
-  const d = new Date(dateStr + "T00:00:00");
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
 }
 
 // Construit l'avis (par créneau) pour une date donnée, à partir des news de la semaine
@@ -946,11 +914,8 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-new-account").addEventListener("click", () => openAccountDialog(null));
   document.getElementById("btn-new-setup").addEventListener("click", () => openSetupDialog(null));
 
-  document.getElementById("weekly-checklist-add").addEventListener("click", addWeeklyChecklist);
-  document.getElementById("weekly-checklist-input").addEventListener("keydown", e => { if (e.key === "Enter") addWeeklyChecklist(); });
   document.getElementById("daily-checklist-add").addEventListener("click", addDailyChecklist);
   document.getElementById("daily-checklist-input").addEventListener("keydown", e => { if (e.key === "Enter") addDailyChecklist(); });
-  document.getElementById("btn-load-weekly-template").addEventListener("click", loadWeeklyTemplate);
   document.getElementById("btn-load-daily-template").addEventListener("click", loadDailyTemplate);
 
   document.getElementById("modal-cancel").addEventListener("click", closeModal);
