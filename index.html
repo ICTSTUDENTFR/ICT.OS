@@ -108,6 +108,19 @@
   .checklist-add{display:flex;gap:8px;margin-top:12px;}
   .checklist-add input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
 
+  /* grille de recommandation trading (Weekly/Daily Planner) */
+  .advice-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .advice-table th{background:#EFEEE9;font-size:10.5px;text-transform:uppercase;color:var(--muted);padding:6px 8px;text-align:left;}
+  .advice-table td{padding:6px 8px;border-top:1px solid var(--border);vertical-align:top;}
+  .advice-cell{border-radius:6px;padding:5px 8px;font-size:11.5px;font-weight:bold;color:#fff;display:inline-block;min-width:64px;text-align:center;}
+  .advice-ok{background:var(--win);}
+  .advice-caution{background:var(--warning);}
+  .advice-avoid{background:var(--danger);}
+  .advice-reasons{list-style:none;margin:8px 0 0;padding:0;font-size:11.5px;color:var(--muted);}
+  .advice-reasons li{padding:3px 0;}
+  .daily-banner-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .daily-banner-row .advice-cell{min-width:90px;}
+
   /* stats bars */
   .bar-row{margin-bottom:12px;}
   .bar-row .bar-head{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;}
@@ -264,7 +277,20 @@
           <div class="page-title">Weekly Planner</div>
           <div class="page-note" id="weekly-week-lbl"></div>
           <div class="panel">
-            <h3>✅ Checklist des biais de la semaine</h3>
+            <div class="page-toolbar" style="margin-bottom:8px;">
+              <h3 style="margin:0;">🚦 Quand trader / éviter cette semaine</h3>
+              <span></span>
+            </div>
+            <div class="page-note" style="margin:-4px 0 12px;">Calculé automatiquement à partir des news économiques ajoutées ci-dessous (règles ICT : NFP, FOMC, CPI/PPI, veille/lendemain, Powell…).</div>
+            <div style="overflow-x:auto;">
+              <table class="advice-table" id="weekly-advice-grid"></table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="page-toolbar" style="margin-bottom:8px;">
+              <h3 style="margin:0;">✅ Checklist des biais de la semaine</h3>
+              <button class="btn secondary" id="btn-load-weekly-template">＋ Charger la checklist type ICT</button>
+            </div>
             <ul class="checklist" id="weekly-checklist"></ul>
             <div class="checklist-add">
               <input type="text" id="weekly-checklist-input" placeholder="Nouveau biais / point à vérifier…">
@@ -277,7 +303,7 @@
               <button class="btn secondary" id="btn-new-news">＋ Ajouter une news</button>
             </div>
             <table class="data">
-              <thead><tr><th>Date</th><th>Event</th><th>Impact</th><th>Implication</th><th></th></tr></thead>
+              <thead><tr><th>Date</th><th>Heure</th><th>Type</th><th>Event</th><th>Impact</th><th>Implication</th><th></th></tr></thead>
               <tbody id="weekly-news-tbody"></tbody>
             </table>
           </div>
@@ -288,7 +314,15 @@
           <div class="page-title">Daily Planner</div>
           <div class="page-note" id="daily-date-lbl"></div>
           <div class="panel">
-            <h3>✅ Checklist des biais du jour</h3>
+            <h3>🚦 Recommandation du jour</h3>
+            <div class="daily-banner-row" id="daily-advice-banner"></div>
+            <ul class="advice-reasons" id="daily-advice-reasons"></ul>
+          </div>
+          <div class="panel">
+            <div class="page-toolbar" style="margin-bottom:8px;">
+              <h3 style="margin:0;">✅ Checklist des biais du jour</h3>
+              <button class="btn secondary" id="btn-load-daily-template">＋ Charger la checklist type ICT</button>
+            </div>
             <ul class="checklist" id="daily-checklist"></ul>
             <div class="checklist-add">
               <input type="text" id="daily-checklist-input" placeholder="Nouveau biais du jour…">

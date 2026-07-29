@@ -16,6 +16,39 @@ const RESULTATS = ["Win", "Loss", "Breakeven"];
 const IMPACTS = ["Faible", "Moyen", "Élevé"];
 const STATUTS_GOAL = ["En cours", "Atteint", "Manqué"];
 
+// ---- Types de news économiques (hiérarchie ICT — du plus au moins volatil) ----
+const EVENT_TYPES = ["FOMC / FED", "Powell Speech", "NFP", "CPI", "PPI", "GDP", "PMI", "Retail Sales", "Unemployment Claims", "Trade Balance", "Autre"];
+const HIGH_IMPACT_TYPES = ["FOMC / FED", "NFP", "CPI", "PPI"];
+
+// ---- Checklists types ICT (issues de tes notes "When Avoid Trading ?") ----
+const WEEKLY_BIAS_TEMPLATE = [
+  "Bad Market Conditions — Previous Day Large Range Day",
+  "Bad Market Conditions — EQ of Higher Time Frame Dealing Range",
+  "Bad Market Conditions — Clustering of NWOG / NDOG",
+  "Bad Market Conditions — Weekly Target Reached",
+  "Bad Market Conditions — Friday on a TGIF setup reached on Thursday",
+  "Bad Market Conditions — Multiple return intraweek inside Current NWOG",
+  "London Session — Yesterday Large Range Day x2 ADR",
+  "London Session — 3 Consecutive Up/Down Close Candle",
+  "London Session — Before a Long Week End",
+  "London Session — After a Holiday",
+  "London Session — After a FOMC Event",
+];
+const DAILY_BIAS_TEMPLATE = [
+  "Pre-Market — FOMC Days : do it early or do nothing",
+  "Pre-Market — Elongated move overnight → wait 09:30am",
+  "AM Session — After a large range day → avoid AM, trade PM",
+  "AM Session — If the move was already delivered at 09:30am → trade PM",
+  "AM Session — Large range overnight → choppy AM conditions",
+  "AM Session — After Holiday → avoid AM",
+  "AM Session — Avoid AM the day after a FOMC event",
+  "AM Session — Fed Chair Powell speaks AM → come back after Lunch",
+  "AM Session — Small ORG",
+  "PM Session — Day before a Holiday → trade AM, avoid PM",
+  "PM Session — Day before FED Chair Powell speaks → trade AM, avoid PM",
+  "Last Hour — Avoid on a Trending Day",
+];
+
 const STATUT_COLORS = {
   "Long": "var(--info)", "Short": "var(--warning)",
   "Win": "var(--win)", "Loss": "var(--loss)", "Breakeven": "var(--muted)",
@@ -411,9 +444,20 @@ async function renderWeekly() {
 
   const news = cache.economic_news.filter(n => n.weekly_planner_id === wp.id).sort((a, b) => (a.date_event || "").localeCompare(b.date_event || ""));
   document.getElementById("weekly-news-tbody").innerHTML = news.length ? news.map(n => `
-    <tr><td>${fmtDateFR(n.date_event)}</td><td>${n.event}</td><td>${badge(n.impact, STATUT_COLORS[n.impact])}</td><td>${n.implication || "—"}</td>
+    <tr><td>${fmtDateFR(n.date_event)}</td><td>${n.heure || "—"}</td><td>${n.event_type || "—"}</td><td>${n.event}</td><td>${badge(n.impact, STATUT_COLORS[n.impact])}</td><td>${n.implication || "—"}</td>
     <td class="row-actions"><button onclick="openNewsDialog(${n.id})">✎</button><button onclick="confirmDelete('economic_news', ${n.id}, renderWeekly)">🗑</button></td></tr>`).join("")
-    : `<tr class="empty-row"><td colspan="5">Aucune news économique renseignée</td></tr>`;
+    : `<tr class="empty-row"><td colspan="7">Aucune news économique renseignée</td></tr>`;
+
+  renderWeekAdviceGrid(wp, news);
+}
+async function loadWeeklyTemplate() {
+  const wp = await ensureWeeklyPlanner();
+  const existingLabels = new Set((wp.bias_checklist || []).map(it => it.label));
+  const toAdd = WEEKLY_BIAS_TEMPLATE.filter(l => !existingLabels.has(l)).map(label => ({ label, checked: false }));
+  if (!toAdd.length) { showToast("Checklist type déjà chargée"); return; }
+  const items = [...(wp.bias_checklist || []), ...toAdd];
+  await updateRow("weekly_planners", wp.id, { bias_checklist: items });
+  await refreshAll();
 }
 async function toggleWeeklyChecklist(i) {
   const wp = currentWeeklyPlanner(); if (!wp) return;
@@ -446,7 +490,9 @@ function openNewsDialog(id) {
     table: "economic_news", id,
     fields: [
       { key: "date_event", label: "Date", type: "date", required: true, value: row.date_event || todayStr() },
-      { key: "event", label: "Évènement", type: "text", required: true, value: row.event },
+      { key: "heure", label: "Heure (ex: 08:30)", type: "text", value: row.heure },
+      { key: "event_type", label: "Type d'évènement", type: "select", options: EVENT_TYPES, value: row.event_type || "Autre" },
+      { key: "event", label: "Évènement (libellé libre)", type: "text", required: true, value: row.event },
       { key: "impact", label: "Impact", type: "select", options: IMPACTS, value: row.impact || "Moyen" },
       { key: "implication", label: "Ce que cela implique", type: "textarea", value: row.implication },
     ],
@@ -488,6 +534,18 @@ async function renderDaily() {
   document.getElementById("daily-news-tbody").innerHTML = news.length ? news.map(n => `
     <tr><td>${fmtDateFR(n.date_event)}</td><td>${n.event}</td><td>${badge(n.impact, STATUT_COLORS[n.impact])}</td><td>${n.implication || "—"}</td></tr>`).join("")
     : `<tr class="empty-row"><td colspan="4">Aucune news économique aujourd'hui</td></tr>`;
+
+  const weekNews = cache.economic_news.filter(n => n.weekly_planner_id === dp.weekly_planner_id);
+  renderDailyAdviceBanner(dp.planner_date, weekNews);
+}
+async function loadDailyTemplate() {
+  const dp = await ensureDailyPlanner();
+  const existingLabels = new Set((dp.bias_checklist || []).map(it => it.label));
+  const toAdd = DAILY_BIAS_TEMPLATE.filter(l => !existingLabels.has(l)).map(label => ({ label, checked: false }));
+  if (!toAdd.length) { showToast("Checklist type déjà chargée"); return; }
+  const items = [...(dp.bias_checklist || []), ...toAdd];
+  await updateRow("daily_planners", dp.id, { bias_checklist: items });
+  await refreshAll();
 }
 async function toggleDailyChecklist(i) {
   const dp = currentDailyPlanner(); if (!dp) return;
@@ -511,6 +569,122 @@ async function addDailyChecklist() {
   await updateRow("daily_planners", dp.id, { bias_checklist: items });
   input.value = "";
   await refreshAll();
+}
+
+// ========================================================================
+//  MOTEUR DE RECOMMANDATION TRADING (règles ICT — d'après tes notes)
+// ========================================================================
+const SESSION_SLOTS = ["Pre-Market", "London", "NY AM", "Lunch", "NY PM"];
+const ADVICE_RANK = { "ok": 0, "caution": 1, "avoid": 2 };
+const ADVICE_LABEL = { "ok": "Trade OK", "caution": "Prudence", "avoid": "Éviter" };
+
+function weekdayIndex(dateStr) {
+  // 0=Lundi … 4=Vendredi, null si weekend
+  const d = new Date(dateStr + "T00:00:00");
+  const day = d.getDay(); // 0=dimanche
+  if (day === 0 || day === 6) return null;
+  return day - 1;
+}
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+// Construit l'avis (par créneau) pour une date donnée, à partir des news de la semaine
+function computeDayAdvice(dateStr, weekNews) {
+  const slots = {};
+  SESSION_SLOTS.forEach(s => { slots[s] = { status: "ok", reasons: [] }; });
+  const bump = (slot, status, reason) => {
+    if (ADVICE_RANK[status] > ADVICE_RANK[slots[slot].status]) slots[slot].status = status;
+    slots[slot].reasons.push(reason);
+  };
+  const bumpAll = (status, reason) => SESSION_SLOTS.forEach(s => bump(s, status, reason));
+
+  const today = weekNews.filter(n => n.date_event === dateStr);
+  const tomorrow = weekNews.filter(n => n.date_event === addDays(dateStr, 1));
+  const yesterday = weekNews.filter(n => n.date_event === addDays(dateStr, -1));
+  const hasType = (list, type) => list.some(n => n.event_type === type);
+  const highToday = today.filter(n => HIGH_IMPACT_TYPES.includes(n.event_type) || n.impact === "Élevé");
+
+  // --- NFP ---
+  if (hasType(today, "NFP")) {
+    bump("Pre-Market", "caution", "NFP à 8:30am — prudence avant la news.");
+    bump("London", "caution", "Range asiatique/London avant le Judas Swing du NFP.");
+    bump("NY AM", "avoid", "N'échange pas NFP entre 8h et 9h30 — attends 9h30-10am.");
+    bump("Lunch", "caution", "NFP : le vrai mouvement peut se poursuivre après 9h30.");
+    bump("NY PM", "avoid", "Évite la PM session le jour du NFP.");
+  }
+  // --- FOMC / FED ---
+  if (hasType(today, "FOMC / FED")) {
+    bump("Pre-Market", "caution", "Jour de FOMC : trade tôt (7h-8h30) ou pas du tout.");
+    bump("NY AM", "avoid", "Évite l'AM session le jour du FOMC.");
+    bump("Lunch", "caution", "FOMC : le 1er run (14h) est souvent un leurre.");
+    bump("NY PM", "avoid", "Le vrai mouvement FOMC arrive vers 14h25-14h30, pas avant.");
+  }
+  // --- CPI / PPI ---
+  if (hasType(today, "CPI") || hasType(today, "PPI")) {
+    bump("Pre-Market", "avoid", "Ne rien faire avant CPI/PPI — roulette russe.");
+    bump("NY AM", "caution", "Attends 30min minimum ou l'Opening Bell 9h30 après CPI/PPI.");
+    bump("NY PM", "caution", "PPI le lendemain d'un CPI : prudence sur la PM.");
+  }
+  // --- Powell Speech ---
+  if (hasType(today, "Powell Speech")) {
+    bump("NY AM", "caution", "Powell parle — Price Action possiblement erratique (Smoke Screen).");
+    bump("NY PM", "caution", "Powell : configuration à observer 15-30min après son discours.");
+  }
+  // --- Veille d'un High Impact (NFP/FOMC/CPI/PPI demain) ---
+  const highTomorrow = tomorrow.filter(n => HIGH_IMPACT_TYPES.includes(n.event_type));
+  if (highTomorrow.length) {
+    bump("NY PM", "avoid", `Veille de ${highTomorrow.map(n => n.event_type).join(", ")} — n'échange pas la PM session.`);
+  }
+  const powellTomorrow = tomorrow.some(n => n.event_type === "Powell Speech");
+  if (powellTomorrow) bump("NY PM", "avoid", "Veille d'un discours de Powell — trade l'AM, évite la PM.");
+
+  // --- Lendemain d'un FOMC ---
+  if (hasType(yesterday, "FOMC / FED")) {
+    bump("NY AM", "avoid", "Lendemain de FOMC — on observe, on ne trade pas l'AM.");
+    bump("Lunch", "caution", "Lendemain de FOMC — collecte de données pour la PM.");
+  }
+  // --- 2 news à fort impact le même jour ---
+  if (highToday.length >= 2) {
+    bump("NY AM", "avoid", "2 news à fort impact dans la session — configuration Seek & Destroy probable.");
+  }
+  // --- Lundi sans event mais semaine avec NFP/FOMC/CPI plus tard ---
+  const wd = weekdayIndex(dateStr);
+  if (wd === 0 && !today.length) {
+    const hasHighLaterInWeek = weekNews.some(n => HIGH_IMPACT_TYPES.includes(n.event_type) && n.date_event > dateStr);
+    if (hasHighLaterInWeek) bumpAll("caution", "Lundi d'une semaine à évènement (NFP/FOMC/CPI) — journée de consolidation probable, laisse le Weekly Range se dessiner.");
+  }
+  return slots;
+}
+
+function adviceCellHtml(cell) {
+  return `<span class="advice-cell advice-${cell.status}" title="${escapeAttr(cell.reasons.join(" "))}">${ADVICE_LABEL[cell.status]}</span>`;
+}
+
+function renderWeekAdviceGrid(wp, weekNews) {
+  const monday = wp.week_start_date;
+  const days = [0, 1, 2, 3, 4].map(i => addDays(monday, i));
+  const dayLabels = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
+  let html = `<thead><tr><th>Session</th>${dayLabels.map((l, i) => `<th>${l}<br><span style="font-weight:normal;text-transform:none;">${fmtDateFR(days[i])}</span></th>`).join("")}</tr></thead><tbody>`;
+  const advicesByDay = days.map(d => computeDayAdvice(d, weekNews));
+  SESSION_SLOTS.forEach(slot => {
+    html += `<tr><td style="font-weight:bold;">${slot}</td>` + advicesByDay.map(a => `<td>${adviceCellHtml(a[slot])}</td>`).join("") + `</tr>`;
+  });
+  html += `</tbody>`;
+  document.getElementById("weekly-advice-grid").innerHTML = html;
+}
+
+function renderDailyAdviceBanner(dateStr, weekNews) {
+  const advice = computeDayAdvice(dateStr, weekNews);
+  document.getElementById("daily-advice-banner").innerHTML = SESSION_SLOTS.map(slot =>
+    `<div>${slot}<br>${adviceCellHtml(advice[slot])}</div>`).join("");
+  const reasons = [];
+  SESSION_SLOTS.forEach(slot => advice[slot].reasons.forEach(r => { if (!reasons.includes(r)) reasons.push(r); }));
+  document.getElementById("daily-advice-reasons").innerHTML = reasons.length
+    ? reasons.map(r => `<li>• ${r}</li>`).join("")
+    : `<li>Aucune news à fort impact détectée — journée sans contrainte particulière (garde ta checklist de biais en tête).</li>`;
 }
 
 // ========================================================================
@@ -776,6 +950,8 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("weekly-checklist-input").addEventListener("keydown", e => { if (e.key === "Enter") addWeeklyChecklist(); });
   document.getElementById("daily-checklist-add").addEventListener("click", addDailyChecklist);
   document.getElementById("daily-checklist-input").addEventListener("keydown", e => { if (e.key === "Enter") addDailyChecklist(); });
+  document.getElementById("btn-load-weekly-template").addEventListener("click", loadWeeklyTemplate);
+  document.getElementById("btn-load-daily-template").addEventListener("click", loadDailyTemplate);
 
   document.getElementById("modal-cancel").addEventListener("click", closeModal);
   document.getElementById("modal-delete").addEventListener("click", () => {
