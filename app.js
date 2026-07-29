@@ -4,8 +4,8 @@
 // ========================================================================
 
 // ---- 1) CONFIGURATION ----
-const SUPABASE_URL = "https://TON-PROJET.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_....";
+const SUPABASE_URL = "https://xyiictiolluhozyngvsk.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_Ym9XO56FKMTZjLBaGJh7-g_X0qlI-9m";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ---- 2) CONSTANTES ----
