@@ -105,6 +105,10 @@ function badge(text, color) {
   if (!text) return "";
   return `<span class="badge" style="background:${color || "var(--muted)"}">${text}</span>`;
 }
+function badgeSubtle(text, color) {
+  if (!text) return "";
+  return `<span class="badge-subtle" style="color:${color || "var(--muted)"}">${text}</span>`;
+}
 function escapeAttr(v) { return String(v == null ? "" : v).replace(/"/g, "&quot;"); }
 function findAccount(id) { return cache.accounts.find(a => a.id === id); }
 function findSetup(id) { return cache.setups.find(s => s.id === id); }
@@ -196,9 +200,11 @@ async function onLoggedIn(user) {
   currentUser = user;
   document.getElementById("auth-screen").style.display = "none";
   document.getElementById("app-screen").style.display = "block";
+  document.getElementById("app-loader").style.display = "flex";
   document.getElementById("user-email-lbl").textContent = user.email;
   await refreshCache();
   showPage("dashboard");
+  document.getElementById("app-loader").style.display = "none";
 }
 async function handleLogout() {
   await sb.auth.signOut();
@@ -222,6 +228,12 @@ function showPage(key) {
 function openMobileMenu() { document.getElementById("sidebar").classList.add("open"); document.getElementById("sidebar-overlay").classList.add("open"); }
 function closeMobileMenu() { document.getElementById("sidebar").classList.remove("open"); document.getElementById("sidebar-overlay").classList.remove("open"); }
 function renderPage(key) {
+  const pageEl = document.getElementById("page-" + key);
+  if (pageEl) {
+    pageEl.classList.remove("fade-in");
+    void pageEl.offsetWidth; // force reflow pour rejouer l'animation
+    pageEl.classList.add("fade-in");
+  }
   if (key === "dashboard") renderDashboard();
   else if (key === "journal") renderJournal();
   else if (key === "review") renderReview();
@@ -336,12 +348,12 @@ function renderJournal() {
     <tr>
       <td>${fmtDateFR(t.trade_date)}</td>
       <td style="font-weight:bold;">${t.ticker || "—"}</td>
-      <td>${badge(t.direction, STATUT_COLORS[t.direction])}</td>
+      <td>${badgeSubtle(t.direction, STATUT_COLORS[t.direction])}</td>
       <td>${accountLabel(findAccount(t.account_id))}</td>
       <td>${setupLabel(findSetup(t.setup_id)) }</td>
-      <td>${badge(t.session, STATUT_COLORS[t.session])}</td>
+      <td>${badgeSubtle(t.session, STATUT_COLORS[t.session])}</td>
       <td>${t.risk_percent}%</td>
-      <td>${badge(t.resultat, STATUT_COLORS[t.resultat])}</td>
+      <td>${badgeSubtle(t.resultat, STATUT_COLORS[t.resultat])}</td>
       <td style="color:${(t.profit_loss || 0) >= 0 ? "var(--win)" : "var(--loss)"};font-weight:bold;">$${Number(t.profit_loss || 0).toFixed(2)}</td>
       <td class="row-actions">
         <button onclick="openTradeDialog(${t.id})">✎</button>
@@ -449,7 +461,7 @@ async function renderWeekly() {
 
   const news = cache.economic_news.filter(n => n.weekly_planner_id === wp.id).sort((a, b) => (a.date_event || "").localeCompare(b.date_event || ""));
   document.getElementById("weekly-news-tbody").innerHTML = news.length ? news.map(n => `
-    <tr><td>${fmtDateFR(n.date_event)}</td><td>${n.heure || "—"}</td><td>${n.event_type || "—"}</td><td>${n.event}</td><td>${badge(n.impact, STATUT_COLORS[n.impact])}</td><td>${n.implication || "—"}</td>
+    <tr><td>${fmtDateFR(n.date_event)}</td><td>${n.heure || "—"}</td><td>${n.event_type || "—"}</td><td>${n.event}</td><td>${badgeSubtle(n.impact, STATUT_COLORS[n.impact])}</td><td>${n.implication || "—"}</td>
     <td class="row-actions"><button onclick="openNewsDialog(${n.id})">✎</button><button onclick="confirmDelete('economic_news', ${n.id}, renderWeekly)">🗑</button></td></tr>`).join("")
     : `<tr class="empty-row"><td colspan="7">Aucune news économique renseignée</td></tr>`;
 
@@ -505,7 +517,7 @@ async function renderDaily() {
 
   const news = cache.economic_news.filter(n => n.weekly_planner_id === dp.weekly_planner_id && n.date_event === dp.planner_date);
   document.getElementById("daily-news-tbody").innerHTML = news.length ? news.map(n => `
-    <tr><td>${fmtDateFR(n.date_event)}</td><td>${n.event}</td><td>${badge(n.impact, STATUT_COLORS[n.impact])}</td><td>${n.implication || "—"}</td></tr>`).join("")
+    <tr><td>${fmtDateFR(n.date_event)}</td><td>${n.event}</td><td>${badgeSubtle(n.impact, STATUT_COLORS[n.impact])}</td><td>${n.implication || "—"}</td></tr>`).join("")
     : `<tr class="empty-row"><td colspan="4">Aucune news économique aujourd'hui</td></tr>`;
 
   const weekNews = cache.economic_news.filter(n => n.weekly_planner_id === dp.weekly_planner_id);
@@ -725,7 +737,7 @@ function renderGoalsRows() {
       <td>${g.titre}</td>
       <td>${pct}% (${g.current_value ?? 0}/${g.target_value ?? "—"})<div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div></td>
       <td>${fmtDateFR(g.deadline) || "—"}</td>
-      <td>${badge(g.statut, STATUT_COLORS[g.statut])}</td>
+      <td>${badgeSubtle(g.statut, STATUT_COLORS[g.statut])}</td>
       <td class="row-actions"><button onclick="openGoalDialog(${g.id})">✎</button><button onclick="confirmDelete('goals', ${g.id}, renderGoals)">🗑</button></td>
     </tr>`;
   }).join("") : `<tr class="empty-row"><td colspan="5">Aucun goal — crée ton premier objectif.</td></tr>`;
@@ -889,6 +901,51 @@ function confirmDelete(table, id, afterFn) {
 }
 
 // ========================================================================
+//  THÈME CLAIR / SOMBRE
+// ========================================================================
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  const btn = document.getElementById("theme-toggle-btn");
+  if (btn) btn.textContent = theme === "dark" ? "☀️" : "🌙";
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute("content", theme === "dark" ? "#0B0D11" : "#181B22");
+}
+function initTheme() {
+  const saved = localStorage.getItem("ictos-theme");
+  const preferred = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  applyTheme(preferred);
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") || "light";
+  const next = current === "dark" ? "light" : "dark";
+  localStorage.setItem("ictos-theme", next);
+  applyTheme(next);
+}
+
+// ========================================================================
+//  GESTE DE BALAYAGE (ouvrir/fermer la sidebar sur mobile)
+// ========================================================================
+function initSwipeGestures() {
+  let startX = null, startY = null;
+  document.addEventListener("touchstart", e => {
+    if (!currentUser) return;
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+  }, { passive: true });
+  document.addEventListener("touchend", e => {
+    if (!currentUser || startX === null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX, dy = t.clientY - startY;
+    const sidebarOpen = document.getElementById("sidebar").classList.contains("open");
+    if (Math.abs(dx) > 60 && Math.abs(dy) < 60) {
+      if (!sidebarOpen && startX < 30 && dx > 0) openMobileMenu();
+      else if (sidebarOpen && dx < 0) closeMobileMenu();
+    }
+    startX = null; startY = null;
+  }, { passive: true });
+}
+
+// ========================================================================
 //  INIT
 // ========================================================================
 document.addEventListener("DOMContentLoaded", () => {
@@ -898,6 +955,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("logout-btn").addEventListener("click", handleLogout);
   document.getElementById("menu-toggle-btn").addEventListener("click", openMobileMenu);
   document.getElementById("sidebar-overlay").addEventListener("click", closeMobileMenu);
+  document.getElementById("sidebar-logo").addEventListener("click", () => showPage("dashboard"));
+  document.getElementById("mobile-topbar-title").addEventListener("click", () => showPage("dashboard"));
+  document.getElementById("theme-toggle-btn").addEventListener("click", toggleTheme);
+  initTheme();
+  initSwipeGestures();
 
   document.querySelectorAll(".nav-item").forEach(el => el.addEventListener("click", () => showPage(el.dataset.page)));
 
