@@ -1,12 +1,12 @@
 {
   "name": "ICT.OS — Trading Journal",
   "short_name": "ICT.OS",
-  "description": "Trading journal : dashboard, journal de trades, daily review, weekly/daily planner, statistiques, goals",
+  "description": "Trading journal : dashboard, journal de trades, daily review, weekly/daily planner, statistiques, goals, wallet",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#F4F8F7",
-  "theme_color": "#1B4746",
+  "theme_color": "#1B4946",
   "orientation": "portrait-primary",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
