@@ -15,7 +15,14 @@ const RISK_LEVELS = [0.25, 0.50, 1.00];
 const RESULTATS = ["Win", "Loss", "Breakeven"];
 const IMPACTS = ["Faible", "Moyen", "Élevé"];
 const STATUTS_GOAL = ["En cours", "Atteint", "Manqué"];
-const EVENT_TYPES = ["FOMC / FED", "Powell Speech", "NFP", "CPI", "PPI", "GDP", "PMI", "Retail Sales", "Unemployment Claims", "Trade Balance", "BOE", "Autre"];
+const EVENT_TYPES = [
+  "FOMC / FED", "Powell Speech", "NFP", "CPI", "PPI", "GDP", "PMI", "Retail Sales",
+  "Unemployment Claims", "Trade Balance",
+  "BOE Monetary Policy Report", "Monetary Policy Summary", "CB Consumer Confidence",
+  "Trump Speak", "MPC Official Bank Rate Votes", "Official Bank Rate", "BOE Gov Bailey Speaks",
+  "Core PCE Price Index m/m", "Employment Cost Index", "Revised UoM Consumer Sentiment",
+  "Revised UoM Inflation Expectations", "Autre",
+];
 const HIGH_IMPACT_TYPES = ["FOMC / FED", "NFP", "CPI", "PPI"];
 const ACCOUNT_TYPES = [{ value: "examen", label: "Compte examen" }, { value: "actif", label: "Compte actif" }];
 const ACCOUNT_STATUSES = [{ value: "en_cours", label: "En cours" }, { value: "valide", label: "Validé" }, { value: "echoue", label: "Échoué" }];
@@ -703,7 +710,7 @@ async function loadDailyTemplate() {
 // ========================================================================
 //  MOTEUR DE RECOMMANDATION TRADING (règles ICT)
 // ========================================================================
-const SESSION_SLOTS = ["Pre-Market", "London", "NY AM", "Lunch", "NY PM", "Last Hour"];
+const SESSION_SLOTS = ["London", "Pre-Market", "NY AM", "Lunch", "NY PM", "Last Hour"];
 const ADVICE_RANK = { "ok": 0, "caution": 1, "avoid": 2 };
 const ADVICE_LABEL = { "ok": "Trade OK", "caution": "Prudence", "avoid": "Éviter" };
 
@@ -1315,5 +1322,26 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(() => { if (currentUser) renderNotifications(); }, 5 * 60 * 1000);
 
   sb.auth.getSession().then(({ data }) => { if (data.session) onLoggedIn(data.session.user); });
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if ("serviceWorker" in navigator) {
+    // IMPORTANT : on ne branche la logique "recharger sur mise à jour" que s'il y avait
+    // déjà un service worker actif AVANT ce chargement. Sur une toute première installation
+    // (ou juste après avoir effacé les données du site), navigator.serviceWorker.controller
+    // est encore null à ce stade : dans ce cas on n'écoute rien, pour éviter tout rechargement
+    // intempestif juste après le premier chargement de la page.
+    const hadControllerBefore = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      reg.update().catch(() => {});
+      if (!hadControllerBefore) return;
+      reg.addEventListener("updatefound", () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "activated" && !sessionStorage.getItem("ictos-reloaded-for-update")) {
+            sessionStorage.setItem("ictos-reloaded-for-update", "1");
+            location.reload();
+          }
+        });
+      });
+    }).catch(() => {});
+  }
 });
