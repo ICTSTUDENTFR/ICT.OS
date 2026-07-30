@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>ICT.OS — Trading Journal</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1B4946">
+<meta name="theme-color" content="#184946">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
 <style>
   :root{
-    --bg:#F4F8F7; --sidebar:#1B4946; --sidebar-active:#265F5B; --sidebar-text:#B9D3CE;
+    --bg:#F4F8F7; --sidebar:#184946; --sidebar-active:#235F5B; --sidebar-text:#B9D3CE;
     --accent:#2C9B86; --accent-dark:#1F7A69; --card:#FFFFFF; --text:#1C2322;
     --muted:#66716F; --border:#D7E5E2; --success:#2FA76B; --warning:#D99A2B;
     --danger:#DB534E; --info:#2C9B86; --win:#2FA76B; --loss:#DB534E;
@@ -56,12 +56,7 @@
   /* ---------- APP LAYOUT ---------- */
   #app-screen{display:none;min-height:100vh;}
   .layout{display:flex;min-height:100vh;}
-  .sidebar{width:230px;background:var(--sidebar);flex-shrink:0;padding:20px 0 16px;display:flex;flex-direction:column;transition:width .25s ease,padding .25s ease,background-color .25s ease;overflow:hidden;position:relative;}
-  .sidebar.collapsed{width:0;padding-left:0;padding-right:0;border:none;}
-  .sidebar-collapse-btn{position:absolute;top:16px;right:14px;width:28px;height:28px;background:rgba(255,255,255,.08);border:none;color:var(--sidebar-text);font-size:14px;cursor:pointer;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;line-height:1;}
-  .sidebar-collapse-btn:hover{background:var(--sidebar-active);color:#fff;}
-  .sidebar-expand-btn{display:none;position:fixed;top:18px;left:18px;z-index:40;width:38px;height:38px;border-radius:var(--r-pill);background:var(--sidebar);color:#fff;border:none;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;line-height:1;}
-  .sidebar-expand-btn.show{display:flex;}
+  .sidebar{width:230px;background:var(--sidebar);flex-shrink:0;padding:20px 0 16px;display:flex;flex-direction:column;transition:background-color .25s ease;}
   .sidebar-logo{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;margin:0 20px 22px;cursor:pointer;user-select:none;}
   .sidebar-logo img{width:42px;height:42px;border-radius:10px;display:block;object-fit:cover;}
   .sidebar-logo .name{color:#fff;font-size:15px;font-weight:800;line-height:1.3;}
@@ -271,9 +266,6 @@
       box-shadow:2px 0 18px rgba(0,0,0,.25);
     }
     .sidebar.open{transform:translateX(0);}
-    .sidebar.collapsed{width:250px;padding:calc(20px + env(safe-area-inset-top)) 0 20px;}
-    .sidebar-collapse-btn{display:none;}
-    .sidebar-expand-btn{display:none !important;}
     .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(20,20,20,.45);z-index:44;}
     .sidebar-overlay.open{display:block;animation:fadeIn .2s ease both;}
     .content{padding:16px;}
@@ -307,7 +299,6 @@
   <div class="mobile-topbar-title" id="mobile-topbar-title">ICT.OS</div>
 </div>
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
-<button class="sidebar-expand-btn" id="sidebar-expand-btn" title="Afficher le menu">☰</button>
 <div id="app-loader" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:80;align-items:center;justify-content:center;flex-direction:column;gap:14px;">
   <div class="skeleton" style="width:64px;height:64px;border-radius:16px;"></div>
   <div class="skeleton" style="width:140px;height:12px;margin:0;"></div>
@@ -315,7 +306,6 @@
 <div id="app-screen">
   <div class="layout">
     <div class="sidebar" id="sidebar">
-      <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" title="Réduire le menu">☰</button>
       <div class="sidebar-logo" id="sidebar-logo">
         <img src="icon-192.png" alt="ICT.OS" onerror="this.style.display='none'">
         <div>
