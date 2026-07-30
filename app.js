@@ -937,22 +937,25 @@ function toggleTheme() {
 //  GESTE DE BALAYAGE (ouvrir/fermer la sidebar sur mobile)
 // ========================================================================
 function initSwipeGestures() {
-  let startX = null, startY = null;
+  let startX = null, startY = null, tracking = false;
   document.addEventListener("touchstart", e => {
     if (!currentUser) return;
     const t = e.touches[0];
     startX = t.clientX; startY = t.clientY;
+    const sidebarOpen = document.getElementById("sidebar").classList.contains("open");
+    // on suit le geste si : on part du bord gauche (pour ouvrir) OU la sidebar est déjà ouverte (pour la fermer, glisser n'importe où dedans)
+    tracking = (!sidebarOpen && startX < 50) || sidebarOpen;
   }, { passive: true });
   document.addEventListener("touchend", e => {
-    if (!currentUser || startX === null) return;
+    if (!currentUser || !tracking || startX === null) return;
     const t = e.changedTouches[0];
     const dx = t.clientX - startX, dy = t.clientY - startY;
     const sidebarOpen = document.getElementById("sidebar").classList.contains("open");
-    if (Math.abs(dx) > 60 && Math.abs(dy) < 60) {
-      if (!sidebarOpen && startX < 30 && dx > 0) openMobileMenu();
+    if (Math.abs(dx) > 45 && Math.abs(dy) < 90) {
+      if (!sidebarOpen && dx > 0) openMobileMenu();
       else if (sidebarOpen && dx < 0) closeMobileMenu();
     }
-    startX = null; startY = null;
+    startX = null; startY = null; tracking = false;
   }, { passive: true });
 }
 

@@ -107,7 +107,8 @@
   select.filter,input.filter{padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:12.5px;background:var(--card);color:var(--text);}
 
   /* table */
-  table.data{width:100%;border-collapse:collapse;background:var(--card);border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);transition:border-color .25s,background-color .25s;}
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r-lg);border:1px solid var(--border);background:var(--card);transition:border-color .25s,background-color .25s;}
+  table.data{width:100%;min-width:560px;border-collapse:collapse;background:transparent;}
   table.data th{background:var(--table-head);text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);padding:10px 12px;}
   table.data td{padding:10px 12px;font-size:13px;border-top:1px solid var(--border);vertical-align:top;}
   table.data tbody tr{transition:background-color .12s;}
@@ -290,18 +291,18 @@
           <div class="cards-row" id="dash-cards"></div>
           <div class="panel">
             <h3>💼 Comptes</h3>
-            <table class="data"><thead><tr><th>Compte</th><th>Balance</th><th>Profit</th><th>ROI</th><th>Trades</th><th>Target</th></tr></thead>
-            <tbody id="dash-accounts"></tbody></table>
+            <div class="table-scroll"><table class="data"><thead><tr><th>Compte</th><th>Balance</th><th>Profit</th><th>ROI</th><th>Trades</th><th>Target</th></tr></thead>
+            <tbody id="dash-accounts"></tbody></table></div>
           </div>
           <div class="panel">
             <h3>🎯 Goals en cours</h3>
-            <table class="data"><thead><tr><th>Titre</th><th>Progression</th><th>Échéance</th><th>Statut</th></tr></thead>
-            <tbody id="dash-goals"></tbody></table>
+            <div class="table-scroll"><table class="data"><thead><tr><th>Titre</th><th>Progression</th><th>Échéance</th><th>Statut</th></tr></thead>
+            <tbody id="dash-goals"></tbody></table></div>
           </div>
           <div class="panel">
             <h3>🗞️ News éco de la semaine</h3>
-            <table class="data"><thead><tr><th>Date</th><th>Event</th><th>Impact</th><th>Implication</th></tr></thead>
-            <tbody id="dash-news"></tbody></table>
+            <div class="table-scroll"><table class="data"><thead><tr><th>Date</th><th>Event</th><th>Impact</th><th>Implication</th></tr></thead>
+            <tbody id="dash-news"></tbody></table></div>
           </div>
         </div>
 
@@ -316,10 +317,10 @@
             </div>
             <button class="btn" id="btn-new-trade">＋ New Trade</button>
           </div>
-          <table class="data">
+          <div class="table-scroll"><table class="data">
             <thead><tr><th>Date</th><th>Ticker</th><th>Dir.</th><th>Compte</th><th>Setup</th><th>Session</th><th>Risk</th><th>Résultat</th><th>P/L</th><th></th></tr></thead>
             <tbody id="journal-tbody"></tbody>
-          </table>
+          </table></div>
         </div>
 
         <!-- DAILY REVIEW -->
@@ -352,10 +353,10 @@
               <h3 style="margin:0;">🗞️ News économiques & implications</h3>
               <button class="btn secondary" id="btn-new-news">＋ Ajouter une news</button>
             </div>
-            <table class="data">
+            <div class="table-scroll"><table class="data">
               <thead><tr><th>Date</th><th>Heure</th><th>Type</th><th>Event</th><th>Impact</th><th>Implication</th><th></th></tr></thead>
               <tbody id="weekly-news-tbody"></tbody>
-            </table>
+            </table></div>
           </div>
         </div>
 
@@ -381,8 +382,8 @@
           </div>
           <div class="panel">
             <h3>🗞️ News économiques du jour (liées au Weekly Planner)</h3>
-            <table class="data"><thead><tr><th>Date</th><th>Event</th><th>Impact</th><th>Implication</th></tr></thead>
-            <tbody id="daily-news-tbody"></tbody></table>
+            <div class="table-scroll"><table class="data"><thead><tr><th>Date</th><th>Event</th><th>Impact</th><th>Implication</th></tr></thead>
+            <tbody id="daily-news-tbody"></tbody></table></div>
           </div>
         </div>
 
@@ -411,10 +412,10 @@
             <span></span>
             <button class="btn" id="btn-new-goal">＋ Nouveau goal</button>
           </div>
-          <table class="data">
+          <div class="table-scroll"><table class="data">
             <thead><tr><th>Titre</th><th>Progression</th><th>Échéance</th><th>Statut</th><th></th></tr></thead>
             <tbody id="goals-tbody"></tbody>
-          </table>
+          </table></div>
         </div>
 
         <!-- COMPTES -->
@@ -424,10 +425,10 @@
             <span></span>
             <button class="btn" id="btn-new-account">＋ Nouveau compte</button>
           </div>
-          <table class="data">
+          <div class="table-scroll"><table class="data">
             <thead><tr><th>Nom</th><th>Starting Balance</th><th>Total Balance</th><th>Total Profit</th><th>ROI</th><th>Nb trades</th><th>Target</th><th></th></tr></thead>
             <tbody id="accounts-tbody"></tbody>
-          </table>
+          </table></div>
         </div>
 
         <!-- SETUPS -->
@@ -437,10 +438,10 @@
             <span></span>
             <button class="btn" id="btn-new-setup">＋ Nouveau setup</button>
           </div>
-          <table class="data">
+          <div class="table-scroll"><table class="data">
             <thead><tr><th>Nom</th><th>Description</th><th>Nb trades</th><th>Winrate</th><th></th></tr></thead>
             <tbody id="setups-tbody"></tbody>
-          </table>
+          </table></div>
         </div>
 
       </div>
