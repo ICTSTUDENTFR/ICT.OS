@@ -909,7 +909,7 @@ function applyTheme(theme) {
   const btn = document.getElementById("theme-toggle-btn");
   if (btn) btn.textContent = theme === "dark" ? "☀️" : "🌙";
   const metaTheme = document.querySelector('meta[name="theme-color"]');
-  if (metaTheme) metaTheme.setAttribute("content", theme === "dark" ? "#0B0D11" : "#181B22");
+  if (metaTheme) metaTheme.setAttribute("content", theme === "dark" ? "#081312" : "#1B4746");
 }
 function initTheme() {
   const saved = localStorage.getItem("ictos-theme");
