@@ -1285,54 +1285,63 @@ window.addEventListener("unhandledrejection", forceHideLoaderOnError);
 // ========================================================================
 //  INIT
 // ========================================================================
+// Helper défensif : attache un écouteur seulement si l'élément existe.
+// Empêche qu'un seul ID manquant (désync entre fichiers, ancien cache...)
+// ne bloque TOUTE l'initialisation (menu, navigation, swipe, etc.).
+function on(id, event, handler) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener(event, handler);
+  else console.warn("[ICT.OS] Élément introuvable, écouteur ignoré :", id);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("auth-submit").addEventListener("click", handleAuthSubmit);
-  document.getElementById("auth-switch-link").addEventListener("click", () => setAuthMode(authMode === "login" ? "signup" : "login"));
-  document.getElementById("auth-password").addEventListener("keydown", e => { if (e.key === "Enter") handleAuthSubmit(); });
-  document.getElementById("logout-btn").addEventListener("click", handleLogout);
-  document.getElementById("menu-toggle-btn").addEventListener("click", openMobileMenu);
-  document.getElementById("sidebar-overlay").addEventListener("click", closeMobileMenu);
-  document.getElementById("sidebar-collapse-btn").addEventListener("click", collapseSidebar);
-  document.getElementById("sidebar-expand-btn").addEventListener("click", expandSidebar);
-  initSidebarCollapse();
-  document.getElementById("sidebar-logo").addEventListener("click", () => showPage("dashboard"));
-  document.getElementById("mobile-topbar-title").addEventListener("click", () => showPage("dashboard"));
-  document.getElementById("theme-toggle-btn").addEventListener("click", toggleTheme);
-  document.getElementById("notif-btn").addEventListener("click", e => { e.stopPropagation(); toggleNotifPanel(); });
-  document.getElementById("notif-pref-urgent").addEventListener("click", () => setNotifPref("urgent"));
-  document.getElementById("notif-pref-all").addEventListener("click", () => setNotifPref("all"));
+  on("auth-submit", "click", handleAuthSubmit);
+  on("auth-switch-link", "click", () => setAuthMode(authMode === "login" ? "signup" : "login"));
+  on("auth-password", "keydown", e => { if (e.key === "Enter") handleAuthSubmit(); });
+  on("logout-btn", "click", handleLogout);
+  on("menu-toggle-btn", "click", openMobileMenu);
+  on("sidebar-overlay", "click", closeMobileMenu);
+  on("sidebar-collapse-btn", "click", collapseSidebar);
+  on("sidebar-expand-btn", "click", expandSidebar);
+  try { initSidebarCollapse(); } catch (e) { console.warn(e); }
+  on("sidebar-logo", "click", () => showPage("dashboard"));
+  on("mobile-topbar-title", "click", () => showPage("dashboard"));
+  on("theme-toggle-btn", "click", toggleTheme);
+  on("notif-btn", "click", e => { e.stopPropagation(); toggleNotifPanel(); });
+  on("notif-pref-urgent", "click", () => setNotifPref("urgent"));
+  on("notif-pref-all", "click", () => setNotifPref("all"));
   document.addEventListener("click", e => {
     const panel = document.getElementById("notif-panel");
-    if (panel.classList.contains("open") && !panel.contains(e.target) && e.target.id !== "notif-btn") panel.classList.remove("open");
+    if (panel && panel.classList.contains("open") && !panel.contains(e.target) && e.target.id !== "notif-btn") panel.classList.remove("open");
   });
-  initTheme();
-  initSwipeGestures();
+  try { initTheme(); } catch (e) { console.warn(e); }
+  try { initSwipeGestures(); } catch (e) { console.warn(e); }
 
   document.querySelectorAll(".nav-item").forEach(el => el.addEventListener("click", () => showPage(el.dataset.page)));
 
-  document.getElementById("sc-trade").addEventListener("click", () => openTradeDialog(null));
-  document.getElementById("sc-review").addEventListener("click", () => openReviewDialog(null));
-  document.getElementById("sc-goal").addEventListener("click", () => openGoalDialog(null));
-  document.getElementById("sc-account").addEventListener("click", () => openAccountDialog(null));
-  document.getElementById("sc-setup").addEventListener("click", () => openSetupDialog(null));
+  on("sc-trade", "click", () => openTradeDialog(null));
+  on("sc-review", "click", () => openReviewDialog(null));
+  on("sc-goal", "click", () => openGoalDialog(null));
+  on("sc-account", "click", () => openAccountDialog(null));
+  on("sc-setup", "click", () => openSetupDialog(null));
 
-  document.getElementById("btn-new-trade").addEventListener("click", () => openTradeDialog(null));
-  document.getElementById("btn-new-review").addEventListener("click", () => openReviewDialog(null));
-  document.getElementById("btn-new-news").addEventListener("click", () => openNewsDialog(null));
-  document.getElementById("btn-new-goal").addEventListener("click", () => openGoalDialog(null));
-  document.getElementById("btn-new-account").addEventListener("click", () => openAccountDialog(null));
-  document.getElementById("btn-new-setup").addEventListener("click", () => openSetupDialog(null));
-  document.getElementById("btn-new-wallet").addEventListener("click", () => openWalletDialog(null));
+  on("btn-new-trade", "click", () => openTradeDialog(null));
+  on("btn-new-review", "click", () => openReviewDialog(null));
+  on("btn-new-news", "click", () => openNewsDialog(null));
+  on("btn-new-goal", "click", () => openGoalDialog(null));
+  on("btn-new-account", "click", () => openAccountDialog(null));
+  on("btn-new-setup", "click", () => openSetupDialog(null));
+  on("btn-new-wallet", "click", () => openWalletDialog(null));
 
-  document.getElementById("daily-checklist-add").addEventListener("click", addDailyChecklist);
-  document.getElementById("daily-checklist-input").addEventListener("keydown", e => { if (e.key === "Enter") addDailyChecklist(); });
-  document.getElementById("btn-load-daily-template").addEventListener("click", loadDailyTemplate);
+  on("daily-checklist-add", "click", addDailyChecklist);
+  on("daily-checklist-input", "keydown", e => { if (e.key === "Enter") addDailyChecklist(); });
+  on("btn-load-daily-template", "click", loadDailyTemplate);
 
-  document.getElementById("modal-cancel").addEventListener("click", closeModal);
-  document.getElementById("modal-delete").addEventListener("click", () => {
+  on("modal-cancel", "click", closeModal);
+  on("modal-delete", "click", () => {
     if (modalContext && modalContext.id) { confirmDelete(modalContext.table, modalContext.id, () => renderPage(currentPage)); closeModal(); }
   });
-  document.getElementById("modal-overlay").addEventListener("click", e => { if (e.target.id === "modal-overlay") closeModal(); });
+  on("modal-overlay", "click", e => { if (e.target.id === "modal-overlay") closeModal(); });
 
   document.addEventListener("keydown", e => {
     if (!currentUser) return;
@@ -1340,7 +1349,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.ctrlKey && e.key === "g") { e.preventDefault(); openGoalDialog(null); }
   });
 
-  setInterval(() => { if (currentUser) renderNotifications(); }, 5 * 60 * 1000);
+  setInterval(() => { if (currentUser) { try { renderNotifications(); } catch (e) { console.warn(e); } } }, 5 * 60 * 1000);
 
   sb.auth.getSession().then(({ data }) => { if (data.session) onLoggedIn(data.session.user); });
   if ("serviceWorker" in navigator) {
