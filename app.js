@@ -101,6 +101,16 @@ function showToast(msg) {
   t.textContent = msg; t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 2600);
 }
+const ICONS = {
+  dollar: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+  trending: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>`,
+  target: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>`,
+  file: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>`,
+  award: `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="m9 13.5-1.5 7L12 18l4.5 2.5-1.5-7"/></svg>`,
+};
+function statIconHtml(key, colorClass) {
+  return `<div class="stat-icon stat-icon-${colorClass}">${ICONS[key]}</div>`;
+}
 function badge(text, color) {
   if (!text) return "";
   return `<span class="badge" style="background:${color || "var(--muted)"}">${text}</span>`;
@@ -279,20 +289,20 @@ function renderDashboard() {
   const tradesCeMois = cache.trades.filter(t => (t.trade_date || "").startsWith(monthStart)).length;
 
   const cards = [
-    ["💰", `$${totalBalance.toFixed(2)}`, "Total Balance", () => showPage("accounts"), null],
-    ["📈", `$${totalProfit.toFixed(2)}`, "Total Profit", () => showPage("accounts"), totalProfit >= 0 ? "win" : "loss"],
-    ["🎯", `${winrate}%`, "Winrate global", () => showPage("stats"), null],
-    ["📝", tradesCeMois, "Trades ce mois", () => showPage("journal"), null],
-    ["🏆", goalsEnCours, "Goals en cours", () => showPage("goals"), null],
+    ["dollar", "accent", `$${totalBalance.toFixed(2)}`, "Total Balance", () => showPage("accounts"), null],
+    ["trending", totalProfit >= 0 ? "win" : "loss", `$${totalProfit.toFixed(2)}`, "Total Profit", () => showPage("accounts"), totalProfit >= 0 ? "win" : "loss"],
+    ["target", "violet", `${winrate}%`, "Winrate global", () => showPage("stats"), null],
+    ["file", "warning", tradesCeMois, "Trades ce mois", () => showPage("journal"), null],
+    ["award", "muted", goalsEnCours, "Goals en cours", () => showPage("goals"), null],
   ];
   const wrap = document.getElementById("dash-cards");
   wrap.innerHTML = cards.map((c, i) => `
     <div class="stat-card clickable" data-i="${i}">
-      <div style="font-size:20px;">${c[0]}</div>
-      <div class="num ${c[4] || ""}">${c[1]}</div>
-      <div class="label">${c[2]}</div>
+      ${statIconHtml(c[0], c[1])}
+      <div class="num ${c[5] || ""}">${c[2]}</div>
+      <div class="label">${c[3]}</div>
     </div>`).join("");
-  wrap.querySelectorAll(".stat-card").forEach(el => el.addEventListener("click", () => cards[Number(el.dataset.i)][3]()));
+  wrap.querySelectorAll(".stat-card").forEach(el => el.addEventListener("click", () => cards[Number(el.dataset.i)][4]()));
 
   document.getElementById("dash-accounts").innerHTML = stats.length ? stats.map(({ a, s }) => `
     <tr onclick="openAccountDialog(${a.id})" style="cursor:pointer;">
@@ -685,10 +695,10 @@ function renderStats() {
   const totalPL = round2(cache.trades.reduce((s, t) => s + (Number(t.profit_loss) || 0), 0));
 
   document.getElementById("stats-cards").innerHTML = [
-    ["📝", totalTrades, "Trades enregistrés"],
-    ["🎯", winrate + "%", "Winrate global"],
-    ["💰", "$" + totalPL.toFixed(2), "P/L cumulé"],
-  ].map(c => `<div class="stat-card"><div style="font-size:20px;">${c[0]}</div><div class="num">${c[1]}</div><div class="label">${c[2]}</div></div>`).join("");
+    ["file", "warning", totalTrades, "Trades enregistrés"],
+    ["target", "violet", winrate + "%", "Winrate global"],
+    ["dollar", "accent", "$" + totalPL.toFixed(2), "P/L cumulé"],
+  ].map(c => `<div class="stat-card">${statIconHtml(c[0], c[1])}<div class="num">${c[2]}</div><div class="label">${c[3]}</div></div>`).join("");
 
   // par session
   const bySession = SESSIONS.map(s => {

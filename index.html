@@ -12,7 +12,7 @@
     --accent:#2E9987; --accent-dark:#1F6E5F; --card:#FFFFFF; --text:#1D2225;
     --muted:#6C7B79; --border:#DCE7E4; --success:#2FA76B; --warning:#D99A2B;
     --danger:#DB534E; --info:#2E9987; --win:#2FA76B; --loss:#DB534E;
-    --table-head:#EDF4F2; --logo-card-bg:#24605D;
+    --table-head:#EDF4F2; --logo-card-bg:#24605D; --accent2:#6C63A6;
     --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
   }
   html[data-theme="dark"]{
@@ -20,7 +20,7 @@
     --accent:#3FB49C; --accent-dark:#63C9B3; --card:#132523; --text:#E8F2F0;
     --muted:#7C948F; --border:#203A37; --success:#3FB49C; --warning:#E0A93C;
     --danger:#E5645D; --info:#3FB49C; --win:#3FB49C; --loss:#E5645D;
-    --table-head:#182F2C; --logo-card-bg:#173432;
+    --table-head:#182F2C; --logo-card-bg:#173432; --accent2:#8B82C9;
   }
   *{box-sizing:border-box;}
   html{transition:background-color .25s ease;}
@@ -49,15 +49,16 @@
   #app-screen{display:none;min-height:100vh;}
   .layout{display:flex;min-height:100vh;}
   .sidebar{width:230px;background:var(--sidebar);flex-shrink:0;padding:20px 0 16px;display:flex;flex-direction:column;transition:background-color .25s ease;}
-  .sidebar-logo{display:flex;align-items:center;gap:10px;margin:0 16px 18px;padding:10px;background:var(--logo-card-bg);border-radius:var(--r-md);cursor:pointer;transition:transform .15s ease,background-color .25s ease;user-select:none;}
-  .sidebar-logo:hover{transform:translateY(-1px);}
-  .sidebar-logo img{width:34px;height:34px;border-radius:8px;display:block;object-fit:cover;}
-  .sidebar-logo .name{color:#fff;font-size:14px;font-weight:bold;line-height:1.25;}
+  .sidebar-logo{display:flex;align-items:center;gap:10px;margin:0 20px 22px;padding:0;cursor:pointer;user-select:none;}
+  .sidebar-logo img{width:38px;height:38px;border-radius:9px;display:block;object-fit:cover;}
+  .sidebar-logo .name{color:#fff;font-size:15px;font-weight:bold;line-height:1.3;}
+  .sidebar-logo .sub{color:var(--sidebar-text);font-size:11px;font-weight:normal;}
   .nav-section-label{color:#5F6673;font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:bold;padding:14px 20px 6px;}
   .nav-section-label:first-of-type{padding-top:0;}
-  .nav-item{color:var(--sidebar-text);padding:10px 16px;margin:0 8px;border-radius:var(--r-sm);font-size:14px;cursor:pointer;user-select:none;transition:background-color .15s,color .15s;}
+  .nav-item{display:flex;align-items:center;gap:11px;color:var(--sidebar-text);padding:10px 16px;margin:0 8px;border-radius:var(--r-md);font-size:13.5px;cursor:pointer;user-select:none;transition:background-color .15s,color .15s;}
+  .nav-item svg{width:18px;height:18px;flex-shrink:0;stroke:currentColor;}
   .nav-item:hover{background:var(--sidebar-active);}
-  .nav-item.active{background:var(--accent);color:#fff;}
+  .nav-item.active{background:var(--accent);color:#fff;font-weight:600;}
   .sidebar-footer{margin-top:auto;padding:14px 20px 0;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .sidebar-footer button{background:none;border:none;color:var(--sidebar-text);font-size:12.5px;padding:8px 0;}
   .sidebar-footer button:hover{color:#fff;}
@@ -81,6 +82,14 @@
   .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;min-width:150px;flex:1;transition:border-color .25s,background-color .25s,transform .15s;}
   .stat-card.clickable{cursor:pointer;}
   .stat-card.clickable:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .stat-icon{width:38px;height:38px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:12px;}
+  .stat-icon svg{width:19px;height:19px;stroke:#fff;}
+  .stat-icon-accent{background:var(--accent);}
+  .stat-icon-win{background:var(--win);}
+  .stat-icon-loss{background:var(--danger);}
+  .stat-icon-warning{background:var(--warning);}
+  .stat-icon-violet{background:var(--accent2);}
+  .stat-icon-muted{background:var(--muted);}
   .stat-card .num{font-size:26px;font-weight:bold;}
   .stat-card .num.win{color:var(--win);}
   .stat-card .num.loss{color:var(--loss);}
@@ -229,27 +238,30 @@
     <div class="sidebar" id="sidebar">
       <div class="sidebar-logo" id="sidebar-logo">
         <img src="icon-192.png" alt="ICT.OS" onerror="this.style.display='none'">
-        <div class="name">ICT.OS</div>
+        <div>
+          <div class="name">ICT.OS</div>
+          <div class="sub">Trading Journal</div>
+        </div>
       </div>
 
       <div class="nav-section-label">Pilotage</div>
-      <div class="nav-item" data-page="dashboard">🏠  Dashboard</div>
+      <div class="nav-item" data-page="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg> Dashboard</div>
 
       <div class="nav-section-label">Trading</div>
-      <div class="nav-item" data-page="journal">📝  Trading Journal</div>
-      <div class="nav-item" data-page="review">🔍  Daily Review</div>
+      <div class="nav-item" data-page="journal"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg> Trading Journal</div>
+      <div class="nav-item" data-page="review"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg> Daily Review</div>
 
       <div class="nav-section-label">Planning</div>
-      <div class="nav-item" data-page="weekly">🗓️  Weekly Planner</div>
-      <div class="nav-item" data-page="daily">📆  Daily Planner</div>
+      <div class="nav-item" data-page="weekly"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> Weekly Planner</div>
+      <div class="nav-item" data-page="daily"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="m9 15 2 2 4-4"/></svg> Daily Planner</div>
 
       <div class="nav-section-label">Performance</div>
-      <div class="nav-item" data-page="stats">📊  Statistiques</div>
-      <div class="nav-item" data-page="goals">🎯  Goals</div>
+      <div class="nav-item" data-page="stats"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M7 21V10M13 21V4M19 21v-7"/></svg> Statistiques</div>
+      <div class="nav-item" data-page="goals"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg> Goals</div>
 
       <div class="nav-section-label">Gestion</div>
-      <div class="nav-item" data-page="accounts">💼  Comptes</div>
-      <div class="nav-item" data-page="setups">🧩  Setups</div>
+      <div class="nav-item" data-page="accounts"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M2 12h20"/></svg> Comptes</div>
+      <div class="nav-item" data-page="setups"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> Setups</div>
 
       <div class="sidebar-footer">
         <div style="min-width:0;">
