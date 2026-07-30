@@ -559,7 +559,7 @@ async function addDailyChecklist() {
 // ========================================================================
 //  MOTEUR DE RECOMMANDATION TRADING (règles ICT — d'après tes notes)
 // ========================================================================
-const SESSION_SLOTS = ["Pre-Market", "London", "NY AM", "Lunch", "NY PM"];
+const SESSION_SLOTS = ["London", "Pre-Market", "NY AM", "Lunch", "NY PM", "Last Hour"];
 const ADVICE_RANK = { "ok": 0, "caution": 1, "avoid": 2 };
 const ADVICE_LABEL = { "ok": "Trade OK", "caution": "Prudence", "avoid": "Éviter" };
 
@@ -580,6 +580,7 @@ function computeDayAdvice(dateStr, weekNews) {
     slots[slot].reasons.push(reason);
   };
   const bumpAll = (status, reason) => SESSION_SLOTS.forEach(s => bump(s, status, reason));
+  const bumpPM = (status, reason) => { bump("NY PM", status, reason); bump("Last Hour", status, reason); };
 
   const today = weekNews.filter(n => n.date_event === dateStr);
   const tomorrow = weekNews.filter(n => n.date_event === addDays(dateStr, 1));
@@ -593,33 +594,33 @@ function computeDayAdvice(dateStr, weekNews) {
     bump("London", "caution", "Range asiatique/London avant le Judas Swing du NFP.");
     bump("NY AM", "avoid", "N'échange pas NFP entre 8h et 9h30 — attends 9h30-10am.");
     bump("Lunch", "caution", "NFP : le vrai mouvement peut se poursuivre après 9h30.");
-    bump("NY PM", "avoid", "Évite la PM session le jour du NFP.");
+    bumpPM("avoid", "Évite la PM session le jour du NFP.");
   }
   // --- FOMC / FED ---
   if (hasType(today, "FOMC / FED")) {
     bump("Pre-Market", "caution", "Jour de FOMC : trade tôt (7h-8h30) ou pas du tout.");
     bump("NY AM", "avoid", "Évite l'AM session le jour du FOMC.");
     bump("Lunch", "caution", "FOMC : le 1er run (14h) est souvent un leurre.");
-    bump("NY PM", "avoid", "Le vrai mouvement FOMC arrive vers 14h25-14h30, pas avant.");
+    bumpPM("avoid", "Le vrai mouvement FOMC arrive vers 14h25-14h30, pas avant.");
   }
   // --- CPI / PPI ---
   if (hasType(today, "CPI") || hasType(today, "PPI")) {
     bump("Pre-Market", "avoid", "Ne rien faire avant CPI/PPI — roulette russe.");
     bump("NY AM", "caution", "Attends 30min minimum ou l'Opening Bell 9h30 après CPI/PPI.");
-    bump("NY PM", "caution", "PPI le lendemain d'un CPI : prudence sur la PM.");
+    bumpPM("caution", "PPI le lendemain d'un CPI : prudence sur la PM.");
   }
   // --- Powell Speech ---
   if (hasType(today, "Powell Speech")) {
     bump("NY AM", "caution", "Powell parle — Price Action possiblement erratique (Smoke Screen).");
-    bump("NY PM", "caution", "Powell : configuration à observer 15-30min après son discours.");
+    bumpPM("caution", "Powell : configuration à observer 15-30min après son discours.");
   }
   // --- Veille d'un High Impact (NFP/FOMC/CPI/PPI demain) ---
   const highTomorrow = tomorrow.filter(n => HIGH_IMPACT_TYPES.includes(n.event_type));
   if (highTomorrow.length) {
-    bump("NY PM", "avoid", `Veille de ${highTomorrow.map(n => n.event_type).join(", ")} — n'échange pas la PM session.`);
+    bumpPM("avoid", `Veille de ${highTomorrow.map(n => n.event_type).join(", ")} — n'échange pas la PM session.`);
   }
   const powellTomorrow = tomorrow.some(n => n.event_type === "Powell Speech");
-  if (powellTomorrow) bump("NY PM", "avoid", "Veille d'un discours de Powell — trade l'AM, évite la PM.");
+  if (powellTomorrow) bumpPM("avoid", "Veille d'un discours de Powell — trade l'AM, évite la PM.");
 
   // --- Lendemain d'un FOMC ---
   if (hasType(yesterday, "FOMC / FED")) {
