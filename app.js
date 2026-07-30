@@ -217,10 +217,18 @@ async function onLoggedIn(user) {
   document.getElementById("app-screen").style.display = "block";
   document.getElementById("app-loader").style.display = "flex";
   document.getElementById("user-email-lbl").textContent = user.email;
-  await refreshCache();
-  showPage("dashboard");
-  renderNotifications();
-  document.getElementById("app-loader").style.display = "none";
+  try {
+    await refreshCache();
+    showPage("dashboard");
+    renderNotifications();
+  } catch (err) {
+    console.error("Erreur au chargement du dashboard :", err);
+    showToast("Une erreur est survenue au chargement — réessaie ou recharge la page.");
+  } finally {
+    // Le loader ne doit JAMAIS rester bloqué à l'écran : même en cas d'erreur ci-dessus,
+    // on le masque pour ne jamais empêcher l'utilisateur d'interagir avec l'appli.
+    document.getElementById("app-loader").style.display = "none";
+  }
 }
 async function handleLogout() {
   await sb.auth.signOut();
@@ -1260,6 +1268,19 @@ function confirmDelete(table, id, afterFn) {
     if (ok) { showToast("Supprimé"); await refreshCache(); if (afterFn) afterFn(); else renderPage(currentPage); renderNotifications(); }
   });
 }
+
+// ========================================================================
+//  FILET DE SÉCURITÉ GLOBAL
+//  Si une erreur JS imprévue survient n'importe où dans l'appli, on s'assure
+//  que le loader plein écran ne reste jamais bloqué et n'empêche jamais
+//  l'utilisateur d'interagir avec l'interface.
+// ========================================================================
+function forceHideLoaderOnError() {
+  const loader = document.getElementById("app-loader");
+  if (loader && loader.style.display !== "none") loader.style.display = "none";
+}
+window.addEventListener("error", forceHideLoaderOnError);
+window.addEventListener("unhandledrejection", forceHideLoaderOnError);
 
 // ========================================================================
 //  INIT
